@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Car, UserMinus, ShieldCheck, CalendarDays, ArrowUpRight, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { APPS, type AppKey } from '@/utils/apps'
@@ -22,7 +22,14 @@ const TILE_STYLE: Record<AppKey, string> = {
 export default function HubClient() {
   const [launchingKey, setLaunchingKey] = useState<AppKey | null>(null)
   const [error, setError] = useState('')
+  const [hasLeaveAccess, setHasLeaveAccess] = useState(false)
   const supabase = createClient()
+
+  // A/L Tracker is limited to the al_access list in the database; the tile is
+  // hidden for everyone else (the app itself enforces this too).
+  useEffect(() => {
+    supabase.rpc('has_al_access').then(({ data }) => setHasLeaveAccess(data === true))
+  }, [supabase])
 
   const launch = async (app: (typeof APPS)[number]) => {
     setError('')
@@ -65,7 +72,7 @@ export default function HubClient() {
       {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {APPS.map(app => {
+        {APPS.filter(app => app.key !== 'leave' || hasLeaveAccess).map(app => {
           const Icon = ICONS[app.key]
           return (
             <button
