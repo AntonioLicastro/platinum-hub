@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Car, UserMinus, ShieldCheck, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Car, UserMinus, ShieldCheck, CalendarDays, ArrowUpRight, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { APPS, type AppKey } from '@/utils/apps'
 
@@ -9,12 +9,14 @@ const ICONS: Record<AppKey, LucideIcon> = {
   mileage: Car,
   retention: UserMinus,
   compliance: ShieldCheck,
+  leave: CalendarDays,
 }
 
 const TILE_STYLE: Record<AppKey, string> = {
   mileage: 'bg-blue-50 text-blue-600',
   retention: 'bg-emerald-50 text-emerald-600',
   compliance: 'bg-violet-50 text-violet-600',
+  leave: 'bg-amber-50 text-amber-600',
 }
 
 export default function HubClient() {

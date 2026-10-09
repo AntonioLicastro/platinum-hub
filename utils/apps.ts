@@ -1,4 +1,4 @@
-export type AppKey = 'mileage' | 'retention' | 'compliance'
+export type AppKey = 'mileage' | 'retention' | 'compliance' | 'leave'
 
 export type AppLink = {
   key: AppKey
@@ -27,5 +27,11 @@ export const APPS: AppLink[] = [
     name: 'Compliance Wizard',
     description: 'Staff compliance checks and document tracking',
     url: process.env.NEXT_PUBLIC_COMPLIANCE_WIZARD_URL ?? 'https://compliance-tracker-six.vercel.app',
+  },
+  {
+    key: 'leave',
+    name: 'A/L Tracker',
+    description: 'Annual leave calendar for SLT and regional managers',
+    url: process.env.NEXT_PUBLIC_AL_TRACKER_URL ?? 'https://al-tracker-theta.vercel.app',
   },
 ]
