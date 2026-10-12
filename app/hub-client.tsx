@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Car, UserMinus, ShieldCheck, CalendarDays, ArrowUpRight, type LucideIcon } from 'lucide-react'
+import { Car, UserMinus, ShieldCheck, CalendarDays, Gauge, ArrowUpRight, type LucideIcon } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { APPS, type AppKey } from '@/utils/apps'
 
@@ -10,6 +10,7 @@ const ICONS: Record<AppKey, LucideIcon> = {
   retention: UserMinus,
   compliance: ShieldCheck,
   leave: CalendarDays,
+  ops: Gauge,
 }
 
 const TILE_STYLE: Record<AppKey, string> = {
@@ -17,6 +18,7 @@ const TILE_STYLE: Record<AppKey, string> = {
   retention: 'bg-emerald-50 text-emerald-600',
   compliance: 'bg-violet-50 text-violet-600',
   leave: 'bg-amber-50 text-amber-600',
+  ops: 'bg-sky-50 text-sky-600',
 }
 
 export default function HubClient() {
