@@ -31,7 +31,7 @@ export const APPS: AppLink[] = [
   {
     key: 'leave',
     name: 'HR Locker',
-    description: 'Annual leave calendar for SLT and regional managers',
+    description: '',
     url: process.env.NEXT_PUBLIC_AL_TRACKER_URL ?? 'https://al-tracker-theta.vercel.app',
   },
   {
