@@ -27,7 +27,7 @@ export default function HubClient() {
   const [hasLeaveAccess, setHasLeaveAccess] = useState(false)
   const supabase = createClient()
 
-  // A/L Tracker is limited to the al_access list in the database; the tile is
+  // HR Locker (leave calendar) is limited to the al_access list in the database; the tile is
   // hidden for everyone else (the app itself enforces this too).
   useEffect(() => {
     supabase.rpc('has_al_access').then(({ data }) => setHasLeaveAccess(data === true))
