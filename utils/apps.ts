@@ -36,7 +36,7 @@ export const APPS: AppLink[] = [
   },
   {
     key: 'ops',
-    name: 'Ops Wizard',
+    name: 'Platinum 360',
     description: 'Monthly CHO KPIs: recruitment, POC records and capacity',
     url: process.env.NEXT_PUBLIC_OPS_WIZARD_URL ?? 'https://ops-wizard.vercel.app',
   },

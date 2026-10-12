@@ -32,7 +32,7 @@ export default function HubClient() {
   // hidden for everyone else (the app itself enforces this too).
   useEffect(() => {
     supabase.rpc('has_al_access').then(({ data }) => setHasLeaveAccess(data === true))
-    // Ops Wizard is private: only people on the ops_access list see its tile.
+    // Platinum 360 is private: only people on the ops_access list see its tile.
     supabase.rpc('has_ops_access').then(({ data }) => setHasOpsAccess(data === true))
   }, [supabase])
 
