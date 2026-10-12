@@ -25,12 +25,15 @@ export default function HubClient() {
   const [launchingKey, setLaunchingKey] = useState<AppKey | null>(null)
   const [error, setError] = useState('')
   const [hasLeaveAccess, setHasLeaveAccess] = useState(false)
+  const [hasOpsAccess, setHasOpsAccess] = useState(false)
   const supabase = createClient()
 
   // HR Locker (leave calendar) is limited to the al_access list in the database; the tile is
   // hidden for everyone else (the app itself enforces this too).
   useEffect(() => {
     supabase.rpc('has_al_access').then(({ data }) => setHasLeaveAccess(data === true))
+    // Ops Wizard is private: only people on the ops_access list see its tile.
+    supabase.rpc('has_ops_access').then(({ data }) => setHasOpsAccess(data === true))
   }, [supabase])
 
   const launch = async (app: (typeof APPS)[number]) => {
@@ -74,7 +77,7 @@ export default function HubClient() {
       {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {APPS.filter(app => app.key !== 'leave' || hasLeaveAccess).map(app => {
+        {APPS.filter(app => (app.key !== 'leave' || hasLeaveAccess) && (app.key !== 'ops' || hasOpsAccess)).map(app => {
           const Icon = ICONS[app.key]
           return (
             <button
