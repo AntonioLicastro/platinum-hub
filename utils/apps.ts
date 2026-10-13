@@ -5,6 +5,9 @@ export type AppLink = {
   name: string
   description: string
   url: string
+  // Where on the app's site the sign-in handoff lives. Defaults to '/auth/handoff'; a
+  // tile can add ?next=/path to land somewhere other than the app's home page.
+  handoffPath?: string
 }
 
 // URLs can be overridden per-environment (e.g. pointed at localhost during
@@ -32,7 +35,9 @@ export const APPS: AppLink[] = [
     key: 'leave',
     name: 'HR Locker',
     description: '',
-    url: process.env.NEXT_PUBLIC_AL_TRACKER_URL ?? 'https://al-tracker-theta.vercel.app',
+    // HR Locker is built into Easy Mileage (its /people area) and replaces the A/L Tracker.
+    url: process.env.NEXT_PUBLIC_EASY_MILEAGE_URL ?? 'https://easymileage.vercel.app',
+    handoffPath: '/auth/handoff?next=/people',
   },
   {
     key: 'ops',
