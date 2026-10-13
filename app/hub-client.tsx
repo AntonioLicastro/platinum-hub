@@ -24,14 +24,14 @@ const TILE_STYLE: Record<AppKey, string> = {
 export default function HubClient() {
   const [launchingKey, setLaunchingKey] = useState<AppKey | null>(null)
   const [error, setError] = useState('')
-  const [hasLeaveAccess, setHasLeaveAccess] = useState(false)
+  const [email, setEmail] = useState('')
   const [hasOpsAccess, setHasOpsAccess] = useState(false)
   const supabase = createClient()
 
-  // HR Locker (leave calendar) is limited to the al_access list in the database; the tile is
-  // hidden for everyone else (the app itself enforces this too).
+  // The HR Locker tile is limited to the people named in its visibleTo list (the app itself
+  // refuses everyone else too).
   useEffect(() => {
-    supabase.rpc('has_al_access').then(({ data }) => setHasLeaveAccess(data === true))
+    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email?.toLowerCase().trim() ?? ''))
     // Platinum 360 is private: only people on the ops_access list see its tile.
     supabase.rpc('has_ops_access').then(({ data }) => setHasOpsAccess(data === true))
   }, [supabase])
@@ -61,9 +61,7 @@ export default function HubClient() {
       return
     }
 
-    const email = session.user.email?.toLowerCase().trim() ?? ''
-    const preview = app.preview?.emails.includes(email) ? app.preview : null
-    const target = new URL(preview?.handoffPath ?? app.handoffPath ?? '/auth/handoff', preview?.url ?? app.url)
+    const target = new URL(app.handoffPath ?? '/auth/handoff', app.url)
     target.hash = new URLSearchParams({
       access_token: session.access_token,
       refresh_token: session.refresh_token,
@@ -79,7 +77,7 @@ export default function HubClient() {
       {error && <div className="bg-red-100 text-red-700 p-3 rounded text-sm">{error}</div>}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {APPS.filter(app => (app.key !== 'leave' || hasLeaveAccess) && (app.key !== 'ops' || hasOpsAccess)).map(app => {
+        {APPS.filter(app => (!app.visibleTo || app.visibleTo.includes(email)) && (app.key !== 'ops' || hasOpsAccess)).map(app => {
           const Icon = ICONS[app.key]
           return (
             <button

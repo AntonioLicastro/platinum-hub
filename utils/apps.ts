@@ -8,10 +8,11 @@ export type AppLink = {
   // Where on the app's site the sign-in handoff lives. Defaults to '/auth/handoff'; a
   // tile can add ?next=/path to land somewhere other than the app's home page.
   handoffPath?: string
-  // A preview: these people (by email) are sent to a different app/URL than everyone
-  // else, so a replacement can be tried before it is switched on for the whole company.
-  preview?: { emails: string[]; url: string; handoffPath?: string }
+  // Only these people (by email) see the tile; everyone else does not.
+  visibleTo?: string[]
 }
+
+const HR_LOCKER_URL = process.env.NEXT_PUBLIC_HR_LOCKER_URL
 
 // URLs can be overridden per-environment (e.g. pointed at localhost during
 // local dev) via these env vars; production falls back to the real domains.
@@ -38,15 +39,12 @@ export const APPS: AppLink[] = [
     key: 'leave',
     name: 'HR Locker',
     description: '',
-    url: process.env.NEXT_PUBLIC_AL_TRACKER_URL ?? 'https://al-tracker-theta.vercel.app',
-    // The new HR Locker is built into Easy Mileage (its /people area) and will replace the
-    // A/L Tracker. Until the leave data is moved over, only these people get the new one;
-    // to switch it on for everyone, move these values into url/handoffPath and drop preview.
-    preview: {
-      emails: ['antoniolicastro@platinumhomecare.ie'],
-      url: process.env.NEXT_PUBLIC_EASY_MILEAGE_URL ?? 'https://easymileage.vercel.app',
-      handoffPath: '/auth/handoff?next=/people',
-    },
+    // HR Locker replaces the A/L Tracker (which no longer exists) and is its own app.
+    // While it is being tried out only the owner sees the tile. Set NEXT_PUBLIC_HR_LOCKER_URL
+    // to its address; until then the tile opens the copy that is still inside Easy Mileage.
+    url: HR_LOCKER_URL ?? process.env.NEXT_PUBLIC_EASY_MILEAGE_URL ?? 'https://easymileage.vercel.app',
+    handoffPath: HR_LOCKER_URL ? '/auth/handoff' : '/auth/handoff?next=/people',
+    visibleTo: ['antoniolicastro@platinumhomecare.ie'],
   },
   {
     key: 'ops',
