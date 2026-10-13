@@ -1,0 +1,108 @@
+// Plain-English names for audit log actions. Actions are logged by every
+// module as `thing.verb`; anything not listed here is still shown, just
+// tidied up by describeAction().
+
+const ACTION_LABELS: Record<string, string> = {
+  'access.grant': 'Granted access',
+  'access.change': 'Changed access',
+  'access.revoke': 'Revoked access',
+  'employee.create': 'Added an employee',
+  'employee.update': 'Edited employment details',
+  'employee.leaver': 'Recorded a leaver',
+  'employees.export': 'Exported the employee list',
+  'private.update': 'Edited personal details',
+  'private.view': 'Viewed personal details',
+  'leaving.update': 'Edited leaving details',
+  'pps.reveal': 'Revealed a PPS number',
+  'emergency_contact.add': 'Added an emergency contact',
+  'emergency_contact.delete': 'Removed an emergency contact',
+  'emergency_contact.primary': 'Changed the primary emergency contact',
+  'compensation.view': 'Viewed pay history',
+  'compensation.add': 'Added a pay change',
+  'document.upload': 'Uploaded a document',
+  'document.download': 'Downloaded a document',
+  'document.update': 'Edited a document',
+  'document.verify': 'Verified a document',
+  'document.reject': 'Rejected a document',
+  'document.delete': 'Deleted a document',
+  'document_type.create': 'Created a document type',
+  'document_type.update': 'Edited a document type',
+  'document_type.activate': 'Activated a document type',
+  'document_type.deactivate': 'Deactivated a document type',
+  'document_type.delete': 'Deleted a document type',
+  'leave.request': 'Requested leave',
+  'leave.record': 'Recorded leave',
+  'leave.approve': 'Approved leave',
+  'leave.reject': 'Rejected leave',
+  'leave.cancel': 'Cancelled leave',
+  'leave.entitlement.set': 'Set a leave entitlement',
+  'leave.entitlement.apply_default': 'Applied default leave entitlements',
+  'leave_type.create': 'Created a leave type',
+  'leave_type.update': 'Edited a leave type',
+  'leave_type.activate': 'Activated a leave type',
+  'leave_type.deactivate': 'Deactivated a leave type',
+  'leave_type.delete': 'Deleted a leave type',
+  'holiday.add': 'Added a public holiday',
+  'holiday.delete': 'Deleted a public holiday',
+  'holiday.generate': 'Generated public holidays',
+  'review.schedule': 'Scheduled a review',
+  'review.complete': 'Completed a review',
+  'review.update': 'Edited a review',
+  'review.delete': 'Deleted a review',
+  'event.create': 'Added a timeline entry',
+  'event.delete': 'Deleted a timeline entry',
+  'timeline.view': 'Viewed the HR timeline',
+  'checklist.start': 'Started a checklist',
+  'checklist.complete': 'Completed a checklist',
+  'checklist.reopen': 'Reopened a checklist',
+  'checklist.delete': 'Deleted a checklist',
+  'checklist.item_add': 'Added a checklist task',
+  'checklist.item_complete': 'Ticked off a checklist task',
+  'checklist.item_reopen': 'Reopened a checklist task',
+  'checklist.item_note': 'Noted a checklist task',
+  'checklist.item_delete': 'Deleted a checklist task',
+  'checklist_template.create': 'Created a checklist template',
+  'checklist_template.update': 'Edited a checklist template',
+  'checklist_template.activate': 'Activated a checklist template',
+  'checklist_template.deactivate': 'Deactivated a checklist template',
+  'checklist_template.duplicate': 'Duplicated a checklist template',
+  'checklist_template.delete': 'Deleted a checklist template',
+  'checklist_template.item_add': 'Added a template task',
+  'checklist_template.item_update': 'Edited a template task',
+  'checklist_template.item_move': 'Reordered a template task',
+  'checklist_template.item_delete': 'Deleted a template task',
+  'report.export': 'Exported a report',
+}
+
+/** "document_type.item_add" becomes "Document type: item add" when no label is known. */
+export function describeAction(action: string): string {
+  const known = ACTION_LABELS[action]
+  if (known) return known
+  const [area, ...rest] = action.split('.')
+  const words = (s: string) => s.replace(/_/g, ' ')
+  const head = words(area).charAt(0).toUpperCase() + words(area).slice(1)
+  return rest.length > 0 ? `${head}: ${words(rest.join(' '))}` : head
+}
+
+/** Areas of the app that the audit log filter offers. A prefix matches every action that starts with it. */
+export const AUDIT_ACTION_GROUPS: { prefix: string; label: string }[] = [
+  { prefix: 'access.', label: 'Access changes' },
+  { prefix: 'employee', label: 'Employee records' },
+  { prefix: 'private.', label: 'Personal details' },
+  { prefix: 'leaving.', label: 'Leaving details' },
+  { prefix: 'pps.', label: 'PPS number reveals' },
+  { prefix: 'emergency_contact.', label: 'Emergency contacts' },
+  { prefix: 'compensation.', label: 'Pay' },
+  { prefix: 'document.', label: 'Documents' },
+  { prefix: 'document_type.', label: 'Document types' },
+  { prefix: 'leave.', label: 'Leave' },
+  { prefix: 'leave_type.', label: 'Leave types' },
+  { prefix: 'holiday.', label: 'Public holidays' },
+  { prefix: 'review.', label: 'Reviews' },
+  { prefix: 'event.', label: 'Timeline entries' },
+  { prefix: 'timeline.', label: 'Timeline views' },
+  { prefix: 'checklist.', label: 'Checklists' },
+  { prefix: 'checklist_template.', label: 'Checklist templates' },
+  { prefix: 'import.', label: 'Imports' },
+  { prefix: 'report.', label: 'Report exports' },
+]
