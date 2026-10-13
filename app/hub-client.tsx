@@ -61,7 +61,9 @@ export default function HubClient() {
       return
     }
 
-    const target = new URL(app.handoffPath ?? '/auth/handoff', app.url)
+    const email = session.user.email?.toLowerCase().trim() ?? ''
+    const preview = app.preview?.emails.includes(email) ? app.preview : null
+    const target = new URL(preview?.handoffPath ?? app.handoffPath ?? '/auth/handoff', preview?.url ?? app.url)
     target.hash = new URLSearchParams({
       access_token: session.access_token,
       refresh_token: session.refresh_token,
