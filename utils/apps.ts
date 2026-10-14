@@ -38,7 +38,7 @@ export const APPS: AppLink[] = [
   {
     key: 'leave',
     name: 'HR Locker',
-    description: '',
+    description: 'Employee records, compliance documents, leave and onboarding',
     // HR Locker replaces the A/L Tracker (which no longer exists) and is its own app.
     // While it is being tried out only the owner sees the tile. Set NEXT_PUBLIC_HR_LOCKER_URL
     // to its address; until then the tile opens the copy that is still inside Easy Mileage.
