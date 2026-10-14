@@ -39,7 +39,6 @@ type CoreFields = {
   job_title: string | null
   department: string | null
   area: string | null
-  leave_group: string | null
   employment_status: EmploymentStatus
   employment_type: EmploymentType | null
   contract_hours_per_week: number | null
@@ -55,7 +54,7 @@ type CoreFields = {
 
 const CORE_FIELD_KEYS: readonly (keyof CoreFields)[] = [
   'first_name', 'last_name', 'preferred_name', 'employee_no', 'payroll_no', 'job_title', 'department', 'area',
-  'leave_group', 'employment_status', 'employment_type', 'contract_hours_per_week', 'work_pattern', 'base_location',
+  'employment_status', 'employment_type', 'contract_hours_per_week', 'work_pattern', 'base_location',
   'manager_email', 'work_phone', 'start_date', 'continuous_service_date', 'probation_end_date', 'end_date',
 ]
 
@@ -68,7 +67,6 @@ const TEXT_LIMITS: [keyof CoreFields, string, number][] = [
   ['job_title', 'Job title', 120],
   ['department', 'Department', 120],
   ['area', 'Area', 80],
-  ['leave_group', 'Leave calendar group', 40],
   ['work_pattern', 'Work pattern', 200],
   ['base_location', 'Base location', 160],
 ]
@@ -102,7 +100,6 @@ export function parseCoreFields(
     job_title: optStr(fd, 'job_title'),
     department: optStr(fd, 'department'),
     area: optStr(fd, 'area'),
-    leave_group: optStr(fd, 'leave_group'),
     employment_status: opts.defaultStatus ?? 'active',
     employment_type: null,
     contract_hours_per_week: null,

@@ -16,11 +16,10 @@ const PRINT_CSS = `@media print {
   main { max-width: none !important; padding: 0 !important; }
 }`
 
-type YearOptions = { year: number; group: string | null; showPending: boolean; allTypes: boolean }
+type YearOptions = { year: number; showPending: boolean; allTypes: boolean }
 
-function hrefFor({ year, group, showPending, allTypes }: YearOptions): string {
+function hrefFor({ year, showPending, allTypes }: YearOptions): string {
   const params = new URLSearchParams({ view: 'year', year: String(year) })
-  if (group) params.set('group', group)
   if (showPending) params.set('pending', '1')
   if (allTypes) params.set('all', '1')
   return `/leave?${params}`
@@ -47,10 +46,10 @@ function Toggle({ href, on, children }: { href: string; on: boolean; children: s
 
 export default async function YearView({ viewer, ...options }: { viewer: PeopleViewer } & YearOptions) {
   const data = await loadLeaveYear(viewer, options)
-  const { year, activeGroup } = data
+  const { year } = data
   const { showPending, allTypes } = options
   const today = todayIso()
-  const hereWith = (changes: Partial<YearOptions>) => hrefFor({ ...options, group: activeGroup, ...changes })
+  const hereWith = (changes: Partial<YearOptions>) => hrefFor({ ...options, ...changes })
   const canAddLeave = viewer.employeeId !== null || can(viewer, 'leave.manage')
   const away = !allTypes ? 'annual leave' : isHr(viewer) ? 'leave of every type' : 'leave of every type you may see'
 
@@ -61,7 +60,7 @@ export default async function YearView({ viewer, ...options }: { viewer: PeopleV
       <div className="hidden print:block">
         <h1 className="text-xl font-semibold text-slate-900">Leave calendar {year}</h1>
         <p className="text-xs text-slate-600">
-          {activeGroup ?? 'Everyone'} · {allTypes ? 'All leave types' : 'Annual leave'} · {showPending ? 'Approved and waiting for approval' : 'Approved only'} · Printed {formatDate(today)}
+          Everyone · {allTypes ? 'All leave types' : 'Annual leave'} · {showPending ? 'Approved and waiting for approval' : 'Approved only'} · Printed {formatDate(today)}
         </p>
       </div>
 
@@ -89,27 +88,6 @@ export default async function YearView({ viewer, ...options }: { viewer: PeopleV
               <Link href={hereWith({ year: Number(today.slice(0, 4)) })} className={`${buttonClass('ghost', 'sm')} ml-1`}>This year</Link>
             )}
           </div>
-
-          <nav aria-label="Filter by group">
-            <ul className="flex flex-wrap items-center gap-2">
-              {[null, ...data.groups].map(group => {
-                const selected = group === activeGroup
-                return (
-                  <li key={group ?? '~all'}>
-                    <Link
-                      href={hereWith({ group })}
-                      aria-current={selected ? 'true' : undefined}
-                      className={`inline-flex items-center rounded-full border px-3.5 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-4 focus-visible:ring-[#323398]/20 ${
-                        selected ? 'border-[#323398] bg-[#323398] text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      {group ?? 'All'}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
-          </nav>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-t border-slate-100 pt-3">
@@ -152,7 +130,7 @@ export default async function YearView({ viewer, ...options }: { viewer: PeopleV
         <p className="flex items-start gap-2 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-4 py-3 text-sm text-slate-600">
           <Info size={16} className="mt-0.5 shrink-0 text-slate-400" />
           <span>
-            No {showPending ? '' : 'approved '}{away} is booked in {year}{activeGroup ? ` for ${activeGroup}` : ''}.
+            No {showPending ? '' : 'approved '}{away} is booked in {year}.
             {!allTypes && ' Turn on “Include all leave types” to see other kinds of leave.'}
           </span>
         </p>
@@ -165,7 +143,7 @@ export default async function YearView({ viewer, ...options }: { viewer: PeopleV
           ))}
         </div>
         <div className="w-full @5xl:w-48 @5xl:shrink-0">
-          <YearPeople sections={data.sections} year={year} showPending={showPending} />
+          <YearPeople people={data.people} year={year} showPending={showPending} />
         </div>
       </div>
 

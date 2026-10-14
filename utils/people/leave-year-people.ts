@@ -1,7 +1,7 @@
 import type { Employee } from './types'
 
 // Pure helpers for the Leave "Year" view: a stable colour per person, initials,
-// short names that stay unique, and the grouping of the people panel. No server
+// short names that stay unique. No server
 // imports, so they are safe to use from any component.
 
 type NameParts = Pick<Employee, 'id' | 'first_name' | 'last_name' | 'preferred_name' | 'email'>
@@ -98,48 +98,6 @@ export function shortLabels(people: NameParts[]): Map<string, string> {
         todo.push(...bucket)
       }
     }
-  }
-  return labels
-}
-
-// ---- Groups ----------------------------------------------------------------
-
-/** Groups are free text; compare them ignoring case and stray spaces. */
-export const groupKey = (group: string | null | undefined): string => (group ?? '').trim().replace(/\s+/g, ' ').toLowerCase()
-
-/** The groups the A/L tracker used; they lead the filter chips and the people panel. */
-export const DEFAULT_LEAVE_GROUPS = ['RMs', 'SLT + Support']
-
-const GROUP_ORDER = DEFAULT_LEAVE_GROUPS.map(groupKey)
-
-/** 'RMs' first, 'SLT + Support' second, then the rest alphabetically. */
-export function compareGroups(a: string, b: string): number {
-  const rank = (g: string) => {
-    const i = GROUP_ORDER.indexOf(groupKey(g))
-    return i === -1 ? GROUP_ORDER.length : i
-  }
-  return rank(a) - rank(b) || a.localeCompare(b, 'en-IE', { sensitivity: 'base' })
-}
-
-/**
- * One display label per group, merging spellings that differ only in case or spacing.
- * The standard names win; otherwise the most common spelling does.
- */
-export function groupLabels(values: (string | null | undefined)[]): Map<string, string> {
-  const spellings = new Map<string, Map<string, number>>()
-  for (const raw of values) {
-    const key = groupKey(raw)
-    if (!key) continue
-    const label = raw!.trim().replace(/\s+/g, ' ')
-    const counts = spellings.get(key) ?? new Map<string, number>()
-    counts.set(label, (counts.get(label) ?? 0) + 1)
-    spellings.set(key, counts)
-  }
-  const labels = new Map<string, string>()
-  for (const [key, counts] of spellings) {
-    const standard = DEFAULT_LEAVE_GROUPS.find(g => groupKey(g) === key)
-    const common = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0][0]
-    labels.set(key, standard ?? common)
   }
   return labels
 }

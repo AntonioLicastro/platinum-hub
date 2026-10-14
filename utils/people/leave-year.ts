@@ -1,4 +1,4 @@
-import { can, canOnEmployee, isHr, type PeopleViewer } from './access'
+import { canOnEmployee, isHr, type PeopleViewer } from './access'
 import { createAdminClient, fetchAllPages, fetchByIds } from './db'
 import { isCurrent } from './employees-data'
 import { addDays } from './format'
@@ -7,7 +7,7 @@ import {
   employeesInScope, listLeaveTypes, listPublicHolidays, loadFailed, redactLeaveRequest,
 } from './leave-data'
 import {
-  chipInitials, compareGroups, groupKey, groupLabels, personColor, plainName, shortLabels, type PersonColor,
+  chipInitials, personColor, plainName, shortLabels, type PersonColor,
 } from './leave-year-people'
 import type { LeaveRequest, LeaveStatus } from './types'
 
@@ -52,21 +52,10 @@ export type YearEntry = {
   typeName: string
 }
 
-export type YearSection = {
-  /** Group label, or null for people with no group. */
-  title: string | null
-  people: YearPerson[]
-  /** Ungrouped people with nothing in the year, kept out of the way of the rest. */
-  quiet: YearPerson[]
-}
-
 export type LeaveYear = {
   year: number
-  /** Group names for the filter chips, 'RMs' first and 'SLT + Support' second. */
-  groups: string[]
-  /** The group being shown, or null for everyone. */
-  activeGroup: string | null
-  sections: YearSection[]
+  /** Everyone in view: current people, plus a leaver only when they have leave in the year. */
+  people: YearPerson[]
   byDay: Map<string, YearEntry[]>
   /** Public holidays in the year, by date. */
   holidays: Map<string, string>
@@ -74,7 +63,7 @@ export type LeaveYear = {
   anyEntries: boolean
 }
 
-type Options = { year: number; group: string | null; showPending: boolean; allTypes: boolean }
+type Options = { year: number; showPending: boolean; allTypes: boolean }
 
 const REQUEST_BATCH = 100
 
@@ -107,29 +96,20 @@ export async function loadLeaveYear(viewer: PeopleViewer, options: Options): Pro
   const employees = scope.filter(e => canOnEmployee(viewer, 'leave.view', e))
   const labels = shortLabels(employees)
 
-  // Distinct groups among the people the viewer can see, merged ignoring case. Filter chips only
-  // offer groups that have a current employee; a leaver's old group still gets its panel heading.
-  const groupLabel = groupLabels(employees.map(e => e.leave_group))
-  const currentKeys = new Set(employees.filter(isCurrent).map(e => groupKey(e.leave_group)))
-  const groups = [...groupLabel].filter(([key]) => currentKeys.has(key)).map(([, label]) => label).sort(compareGroups)
-  const wanted = options.group ? groupKey(options.group) : ''
-  const activeGroup = wanted && currentKeys.has(wanted) ? groupLabel.get(wanted) ?? null : null
-  const pool = activeGroup ? employees.filter(e => groupKey(e.leave_group) === wanted) : employees
-
-  const people = new Map<string, YearPerson>(pool.map(e => [e.id, {
+  const people = new Map<string, YearPerson>(employees.map(e => [e.id, {
     id: e.id, name: plainName(e), label: labels.get(e.id) ?? plainName(e), initials: chipInitials(e),
     color: personColor(e.id), taken: 0, pending: 0,
   }]))
 
   const typeIds = types.filter(t => options.allTypes || t.category === 'annual').map(t => t.id)
   const statuses: LeaveStatus[] = options.showPending ? ['approved', 'pending'] : ['approved']
-  // HR with no filter can read everyone in one go; everyone else is fetched by the ids they may see.
-  const ids = pool.map(e => e.id)
+  // HR can read everyone in one go; everyone else is fetched by the ids they may see.
+  const ids = employees.map(e => e.id)
   const requests = ids.length === 0 || typeIds.length === 0
     ? []
-    : await loadRequests(isHr(viewer) && !activeGroup ? null : ids, typeIds, statuses, first, last)
+    : await loadRequests(isHr(viewer) ? null : ids, typeIds, statuses, first, last)
 
-  const employeeById = new Map(pool.map(e => [e.id, e]))
+  const employeeById = new Map(employees.map(e => [e.id, e]))
   const typeById = new Map(types.map(t => [t.id, t]))
   const holidays = new Map(holidayRows.map(h => [h.holiday_date, h.name]))
   const holidayDates = new Set(holidays.keys())
@@ -177,43 +157,13 @@ export async function loadLeaveYear(viewer: PeopleViewer, options: Options): Pro
   }
 
   // Panel: current people always; a leaver only when they have leave in the year.
-  const listed = new Map<string, YearPerson[]>()
-  const quiet: YearPerson[] = []
-  for (const e of pool) {
+  const listed: YearPerson[] = []
+  for (const e of employees) {
     const person = people.get(e.id)!
     const active = withEntries.has(e.id) || person.taken > 0 || person.pending > 0
-    if (!isCurrent(e) && !active) continue
-    const key = groupKey(e.leave_group)
-    if (!key && !active) {
-      quiet.push(person)
-    } else {
-      const bucket = listed.get(key)
-      if (bucket) bucket.push(person)
-      else listed.set(key, [person])
-    }
+    if (isCurrent(e) || active) listed.push(person)
   }
-  const byLabel = (a: YearPerson, b: YearPerson) => a.label.localeCompare(b.label, 'en-IE', { sensitivity: 'base' })
-  const titles = activeGroup ? [activeGroup] : [...groupLabel.values()].sort(compareGroups)
-  const sections: YearSection[] = titles
-    .filter(title => listed.has(groupKey(title)))
-    .map(title => ({ title, people: listed.get(groupKey(title))!.sort(byLabel), quiet: [] }))
-  if (!activeGroup && (listed.has('') || quiet.length > 0)) {
-    sections.push({ title: null, people: (listed.get('') ?? []).sort(byLabel), quiet: quiet.sort(byLabel) })
-  }
+  listed.sort((a, b) => a.label.localeCompare(b.label, 'en-IE', { sensitivity: 'base' }))
 
-  return { year, groups, activeGroup, sections, byDay, holidays, anyEntries: byDay.size > 0 }
-}
-
-/**
- * Group names already in use, for the suggestions on the Employment tab. Only
- * for people who can edit employees; anyone else gets none.
- */
-export async function listLeaveGroupNames(viewer: PeopleViewer): Promise<string[]> {
-  if (!can(viewer, 'employees.edit')) return []
-  const { data, error } = await fetchAllPages<{ leave_group: string | null }>((from, to) =>
-    createAdminClient().from('hr_employees').select('leave_group').not('leave_group', 'is', null)
-      .order('id').range(from, to).returns<{ leave_group: string | null }[]>()
-  )
-  if (error) loadFailed('listLeaveGroupNames', error)
-  return [...groupLabels(data.map(row => row.leave_group)).values()].sort(compareGroups)
+  return { year, people: listed, byDay, holidays, anyEntries: byDay.size > 0 }
 }

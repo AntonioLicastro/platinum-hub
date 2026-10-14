@@ -4,8 +4,6 @@ import { canOnEmployee } from '@/utils/people/access'
 import { EMPLOYMENT_STATUSES, EMPLOYMENT_TYPES, labelOf } from '@/utils/people/constants'
 import { formatDate } from '@/utils/people/format'
 import { getManagerName, listManagerOptions } from '@/utils/people/profile-data'
-import { listLeaveGroupNames } from '@/utils/people/leave-year'
-import { DEFAULT_LEAVE_GROUPS, groupKey } from '@/utils/people/leave-year-people'
 import { formatHours } from '@/utils/people/profile-format'
 import { ActionForm } from '../../../_components/action-form'
 import { Badge, Card, CardHeader, DataGrid, DataItem, Field, FormGrid, inputClass } from '../../../_components/ui'
@@ -17,9 +15,6 @@ const AREA_SUGGESTIONS = [...AREA_OPTIONS, 'ALL']
 
 export default async function EmploymentTab({ viewer, employee }: TabProps) {
   if (!canOnEmployee(viewer, 'employees.edit', employee)) return <EmploymentReadOnly employee={employee} />
-
-  // Suggestions only: if they cannot be loaded the field still works with the standard groups.
-  const groupNamesPromise = listLeaveGroupNames(viewer).catch(() => [] as string[])
 
   // listManagerOptions throws on a database error. Degrade to the current manager only (kept selected below, so saving
   // cannot clear it) rather than blanking the whole profile.
@@ -35,8 +30,6 @@ export default async function EmploymentTab({ viewer, employee }: TabProps) {
   if (employee.manager_email && !managers.some(m => m.email === employee.manager_email)) {
     managerOptions.unshift({ value: employee.manager_email, label: `${employee.manager_email} (not a current employee)` })
   }
-  const groupSuggestions = [...DEFAULT_LEAVE_GROUPS, ...(await groupNamesPromise)]
-    .filter((g, i, all) => all.findIndex(other => groupKey(other) === groupKey(g)) === i)
   const isLeaver = employee.employment_status === 'leaver'
   const statusOptions = EMPLOYMENT_STATUSES
     .filter(s => s.value !== 'leaver' || isLeaver)
@@ -62,7 +55,6 @@ export default async function EmploymentTab({ viewer, employee }: TabProps) {
           <TextField name="job_title" label="Job title" defaultValue={employee.job_title} list="job-titles" maxLength={120} hint="Pick a standard title or type your own." />
           <TextField name="department" label="Department" defaultValue={employee.department} maxLength={120} />
           <TextField name="area" label="Area" defaultValue={employee.area} list="areas" maxLength={80} hint="Managers see people by this exact value, so choose from the list where you can." />
-          <TextField name="leave_group" label="Leave calendar group" defaultValue={employee.leave_group} list="leave-groups" maxLength={40} hint="Where they appear on the Leave year view, e.g. RMs or SLT + Support. Leave blank for none." />
           <TextField name="base_location" label="Base location" defaultValue={employee.base_location} maxLength={160} placeholder="Office or town they work from" />
           <SelectField name="employment_status" label="Employment status" defaultValue={employee.employment_status} options={statusOptions} required
             hint={isLeaver ? 'Choose another status to reverse a leaver entered by mistake.' : 'To record someone leaving, use Record leaver on the Personal tab.'} />
@@ -97,7 +89,6 @@ export default async function EmploymentTab({ viewer, employee }: TabProps) {
 
       <Datalist id="job-titles" options={TITLE_OPTIONS} />
       <Datalist id="areas" options={AREA_SUGGESTIONS} />
-      <Datalist id="leave-groups" options={groupSuggestions} />
     </ActionForm>
   )
 }
@@ -113,7 +104,6 @@ async function EmploymentReadOnly({ employee }: { employee: TabProps['employee']
         <DataItem label="Job title" value={employee.job_title} />
         <DataItem label="Department" value={employee.department} />
         <DataItem label="Area" value={employee.area} />
-        <DataItem label="Leave calendar group" value={employee.leave_group} />
         <DataItem label="Base location" value={employee.base_location} />
         <DataItem label="Status" value={status && <Badge tone={status.tone} dot>{status.label}</Badge>} />
         <DataItem label="Employment type" value={labelOf(EMPLOYMENT_TYPES, employee.employment_type)} />

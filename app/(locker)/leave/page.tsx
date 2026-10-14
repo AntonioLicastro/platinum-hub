@@ -40,7 +40,6 @@ export default async function LeavePage({ searchParams }: {
   const month = isMonthKey(monthParam) ? monthParam : today.slice(0, 7)
   const yearParam = Number(first(query.year))
   const year = Number.isInteger(yearParam) && yearParam >= 2000 && yearParam <= 2100 ? yearParam : Number(today.slice(0, 4))
-  const group = (first(query.group) ?? '').trim().slice(0, 40) || null
   const typeParam = Number(first(query.type))
   const search = (first(query.q) ?? '').trim().slice(0, 100)
 
@@ -86,7 +85,6 @@ export default async function LeavePage({ searchParams }: {
         <YearView
           viewer={viewer}
           year={parseLeaveYear(first(query.year), Number(today.slice(0, 4)))}
-          group={group}
           showPending={first(query.pending) === '1'}
           allTypes={first(query.all) === '1'}
         />

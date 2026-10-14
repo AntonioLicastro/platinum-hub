@@ -126,13 +126,11 @@ export async function createEmployee(_prev: ActionState, formData: FormData): Pr
   const problem = await managerProblem(values.manager_email, { email, manager_email: null })
   if (problem) return { error: problem }
 
-  // Sent only when set, so adding people keeps working on a database that has not had the leave_group migration yet.
-  const { leave_group: leaveGroup, ...coreValues } = values
   const admin = createAdminClient()
   const { data: created, error } = await admin
     .from('hr_employees')
     .insert({
-      ...coreValues, ...(leaveGroup ? { leave_group: leaveGroup } : {}),
+      ...values,
       email, source: 'manual', created_by: viewer.email, updated_by: viewer.email,
     })
     .select('id')
